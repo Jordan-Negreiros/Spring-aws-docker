@@ -1,5 +1,6 @@
 package com.jordan.beerstore.error;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.jordan.beerstore.error.ErrorResponse.ApiError;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -42,12 +43,22 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(errorResponse);
     }
 
-    private ApiError toApiError(String code, Locale locale) {
+    @ExceptionHandler(InvalidFormatException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidFormatException(InvalidFormatException exception, Locale locale) {
+
+        final String errorCode = "generic-1";
+        final HttpStatus status = HttpStatus.BAD_REQUEST;
+        final ErrorResponse errorResponse = ErrorResponse.of(status, toApiError(errorCode, locale, exception.getValue()));
+
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    private ApiError toApiError(String code, Locale locale, Object... args) {
 
         String message;
 
         try {
-            message = apiErrorMessageSource.getMessage(code, null, locale);
+            message = apiErrorMessageSource.getMessage(code, args, locale);
         } catch (NoSuchMessageException e) {
             LOG.error("Could not find any message for {} code under {} locale", code, locale);
             message = NO_MESSAGE_AVAILABLE;
