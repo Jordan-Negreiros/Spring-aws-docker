@@ -2,6 +2,7 @@ package com.jordan.beerstore.resource;
 
 import com.jordan.beerstore.model.Beer;
 import com.jordan.beerstore.repository.Beers;
+import com.jordan.beerstore.service.BeerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,8 +14,13 @@ import java.util.List;
 @RequestMapping("/beers")
 public class BeerResource {
 
-    @Autowired
-    private Beers beers;
+    private final Beers beers;
+    private final BeerService beerService;
+
+    public BeerResource(@Autowired Beers beers, @Autowired BeerService beerService) {
+        this.beers = beers;
+        this.beerService = beerService;
+    }
 
     @GetMapping
     public List<Beer> all() {
@@ -24,6 +30,6 @@ public class BeerResource {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Beer create(@Valid @RequestBody Beer beer) {
-        return beers.save(beer);
+        return beerService.save(beer);
     }
 }

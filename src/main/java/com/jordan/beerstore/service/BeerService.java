@@ -11,7 +11,7 @@ import java.util.Optional;
 @Service
 public class BeerService {
 
-    private Beers beers;
+    private final Beers beers;
 
     public BeerService(@Autowired Beers beers) {
         this.beers = beers;
