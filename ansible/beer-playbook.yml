@@ -1,0 +1,20 @@
+---
+- name: Ensure Docker is installed
+  # instala em todos as instancias
+  hosts: all
+  # usuario das instacias ec2
+  remote_user: ec2-user
+  # não pegar as informações da maquina, indica que vamos passar todas as informações necessárias do sistema
+  gather_facts: false
+  # inicia o modo super usuário nas máquinas
+  become: true
+  # ações a serem executadas
+  tasks:
+    - name: Install Docker
+      yum: name=docker
+
+    - name: Ensure docker service is started and enable
+      service:
+        name: docker
+        state: started
+        enable: yes
