@@ -34,3 +34,36 @@ resource "aws_security_group" "allow_outbound" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+resource "aws_security_group" "cluster_communication" {
+  vpc_id = aws_vpc.main.id
+  name = "jordan_cluster_communication"
+
+  ingress {
+    from_port = 2377
+    protocol = "tcp"
+    to_port = 2377
+    self = true
+  }
+
+  ingress {
+    from_port = 7946
+    protocol = "tcp"
+    to_port = 7946
+    self = true
+  }
+
+  ingress {
+    from_port = 7946
+    protocol = "udp"
+    to_port = 7946
+    self = true
+  }
+
+  ingress {
+    from_port = 4789
+    protocol = "udp"
+    to_port = 4789
+    self = true
+  }
+}
