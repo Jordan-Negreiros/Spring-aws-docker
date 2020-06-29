@@ -18,3 +18,19 @@
         name: docker
         state: started
         enabled: yes
+
+- name: Initialize Swarm Mode
+  # identificado no template hosts.tpl
+  hosts: manager-leader
+  remote_user: ec2-user
+  gather_facts: false
+  become: true
+  tasks:
+      # Registra se o docker swarm está ativo
+    - shell: "docker info | grep 'Swarm' | awk -F'Swarm: ' '{print $NF}'"
+      register: swarm_mode
+    - name: Swarm init
+      # inicializar o docker swarm no manager lider com ip privado
+      command: docker swarm init --advertise-addr {{ private_ip }}
+      # só executa o comando acima se o docker swarm estiver inativo
+      when: swarm_mode.stdout == "inactive"
