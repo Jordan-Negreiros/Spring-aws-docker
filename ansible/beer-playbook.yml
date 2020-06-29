@@ -20,7 +20,7 @@
         enabled: yes
 
 - name: Initialize Swarm Mode
-  # identificado no template hosts.tpl
+  # identificado no tamplate hosts.tpl
   hosts: manager-leader
   remote_user: ec2-user
   gather_facts: false
@@ -29,8 +29,47 @@
       # Registra se o docker swarm está ativo
     - shell: "docker info | grep 'Swarm' | awk -F'Swarm: ' '{print $NF}'"
       register: swarm_mode
+
     - name: Swarm init
       # inicializar o docker swarm no manager lider com ip privado
       command: docker swarm init --advertise-addr {{ private_ip }}
       # só executa o comando acima se o docker swarm estiver inativo
       when: swarm_mode.stdout == "inactive"
+
+    - name: Master token
+      # recupera o token gerado pelo lider e mostra no console
+      command: docker swarm join-token manager -q
+      # só executa o comando acima se o docker swarm estiver ativo
+      when: swarm_mode.stdout == "active"
+      # e registra em uma variável
+      register: master_token
+
+# entra no cluster do docker swarm para inicializar os managers seguidores do docker swarm
+- name: Join Swarm Cluster
+  # identificado no tamplate hosts.tpl
+  hosts: manager-follower
+  remote_user: ec2-user
+  gather_facts: false
+  become: true
+  # pega as variáveis a serem usadas no comando abaixo
+  vars:
+    token: "{{ hostvars[groups['manager-leader'][0]]['master_token']['stdout'] }}"
+    master: "{{ hostvars[groups['manager-leader'][0]]['private_ip'] }}"
+  tasks:
+    # Registra se o docker swarm está ativo
+    - shell: "docker info | grep 'Swarm' | awk -F'Swarm: ' '{print $NF}'"
+      register: swarm_mode
+
+    # entra no docker swarm como manager
+    - name: Join swarm cluster as manager
+      # recebe o token e o ip do master
+      command: docker swarm join --token {{ token }} {{ master }}:2377
+      # só executa o comando acima se o docker swarm estiver inativo
+      when: swarm_mode.stdout == "inactive"
+      register: follower
+
+    - name: Show join cluster results
+      debug: var=follower.stdout
+
+    - name: Show join cluster errors
+      debug: var=follower.stderr
